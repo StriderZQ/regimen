@@ -1,0 +1,129 @@
+# Written to share a host with unrelated services: own ports, own volumes, no shared
+# state, and hard resource limits — a failure here must not drag a neighbour down.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    env_file:
+      # required: false so `docker compose config` can be checked without secrets.
+      # On a server the file is mandatory: without it there are no keys and no tokens.
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /data
+      BACKUP_DIR: /data/backups
+    volumes:
+      - kag_data:/data
+    # The published port. With no hostname, clients reach this directly; with one,
+    # expose is enough and the tls profile puts Caddy in front.
+    ports:
+      - "${APP_PORT:-8090}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx,sys; sys.exit(0 if httpx.get('http://localhost:8080/healthz', timeout=3).status_code==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    command: ["python", "-m", "app.workers.runner"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /data
+      BACKUP_DIR: /data/backups
+      # Only app applies migrations: two migrating processes must never exist
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - kag_data:/data
+    depends_on:
+      app:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  bot:
+    # The chat entrance. A separate container because the bot is a long-lived poll
+    # against Telegram, not an HTTP handler: its crash must not take the API down.
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    command: ["python", "-m", "app.bot.telegram"]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATA_DIR: /data
+      BACKUP_DIR: /data/backups
+      # Only app applies migrations: two migrating processes must never exist
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - kag_data:/data
+    depends_on:
+      app:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 384M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  caddy:
+    # The tls profile starts only when asked for
+    # (docker compose --profile tls up -d). Without a hostname it is unnecessary, and on
+    # a shared machine a spare container costs memory and another pair of ports.
+    profiles: ["tls"]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    # Ports come from .env: 80 and 443 may already be taken on a shared host
+    ports:
+      - "${CADDY_HTTP_PORT:-8081}:80"
+      - "${CADDY_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+
+volumes:
+  kag_data:
+  caddy_data:
+  caddy_config:

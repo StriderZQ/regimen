@@ -1,0 +1,20 @@
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+backups/
+.DS_Store
+*.bak-*
+var/
+*.egg-info/
+
+# Your own data never enters git: it lives in the database on your server.
+# Keep your training files outside the repository, or in my-training/, which is ignored.
+my-training/

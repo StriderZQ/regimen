@@ -1,0 +1,26 @@
+# Only this layer faces the outside. The application and the database sit on an internal network.
+#
+# With no hostname the site address is ":80": Caddy answers any host, including a bare IP.
+# With PUBLIC_HOSTNAME set it obtains a Let's Encrypt certificate and serves HTTPS.
+# A name like <ip>.nip.io works too: it resolves to that same IP, no domain to buy,
+# and the certificate is a real one.
+{$PUBLIC_HOSTNAME::80} {
+	encode gzip
+	reverse_proxy app:8080
+
+	header {
+		# Over plain http a browser ignores this — harmless, and it takes effect with a hostname
+		Strict-Transport-Security "max-age=31536000;"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	log {
+		output file /data/access.log {
+			roll_size 10mb
+			roll_keep 3
+		}
+	}
+}

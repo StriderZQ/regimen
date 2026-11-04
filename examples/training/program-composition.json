@@ -1,0 +1,22 @@
+{
+  "_comment": "What each strength day is made of. weekday: 0=Mon..6=Sun, must match a row of current-week.md. progression: load | assist | reps | time. seed_value: the starting weight in kg (or seconds for time) when nothing has been logged yet; null means bodyweight.",
+  "days": [
+    {
+      "weekday": 0,
+      "exercises": [
+        {"order": 1, "title": "Гоблет-присед", "garmin_key": "GOBLET_SQUAT", "sets": 3, "target_min": 8, "target_max": 12, "rest_seconds": 90, "progression": "load", "seed_value": 12, "cue": "Колени по линии носков, спина прямая"},
+        {"order": 2, "title": "Румынская тяга", "garmin_key": "ROMANIAN_DEADLIFT", "sets": 3, "target_min": 8, "target_max": 12, "rest_seconds": 90, "progression": "load", "seed_value": 30, "cue": "Таз назад, гриф вдоль ног"},
+        {"order": 3, "title": "Тяга гантели в наклоне", "garmin_key": "DUMBBELL_ROW", "sets": 3, "target_min": 8, "target_max": 12, "rest_seconds": 75, "progression": "load", "seed_value": 10},
+        {"order": 4, "title": "Планка", "garmin_key": "PLANK", "sets": 3, "target_min": 30, "target_max": 60, "rest_seconds": 60, "progression": "time", "seed_value": 30}
+      ]
+    },
+    {
+      "weekday": 3,
+      "exercises": [
+        {"order": 1, "title": "Жим гантелей лёжа", "garmin_key": "DUMBBELL_BENCH_PRESS", "sets": 3, "target_min": 8, "target_max": 12, "rest_seconds": 90, "progression": "load", "seed_value": 12},
+        {"order": 2, "title": "Жим гантелей сидя", "garmin_key": "DUMBBELL_SHOULDER_PRESS", "sets": 3, "target_min": 8, "target_max": 12, "rest_seconds": 90, "progression": "load", "seed_value": 8},
+        {"order": 3, "title": "Тяга верхнего блока", "garmin_key": "LAT_PULLDOWN", "sets": 3, "target_min": 8, "target_max": 12, "rest_seconds": 75, "progression": "load", "seed_value": 30}
+      ]
+    }
+  ]
+}
